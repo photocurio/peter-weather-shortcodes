@@ -55,6 +55,34 @@ function degrees_to_directional($deg)
 	}
 }
 
+function find_icon($code)
+{
+	$code = intval($code);
+	if (!is_numeric($code)) {
+		return '01';
+	} else if ($code < 299) {
+		return '11';
+	} else if ($code < 502 || $code == 520 || $code == 521) {
+		return '09';
+	} else if ($code == 511) {
+		return '13';
+	} else if ($code < 599) {
+		return '10';
+	} else if ($code < 699) {
+		return '13';
+	} else if ($code < 799) {
+		return '50';
+	} else if ($code == 800) {
+		return '01';
+	} else if ($code < 803) {
+		return '02';
+	} else if ($code == 803) {
+		return '04';
+	} else {
+		return '05';
+	}
+}
+
 /**
  * API Request Caching
  *
@@ -68,7 +96,7 @@ function json_cached_api_results($cache_file = NULL, $expires = NULL, $a)
 	global $request_type, $purge_cache, $limit_reached, $request_limit;
 
 	if (!$cache_file) $cache_file = dirname(__FILE__) . '/api-cache.json';
-	if (!$expires) $expires = time() - 180; // 3 minutes
+	if (!$expires) $expires = time() - 180 * 60; // 3 minutes
 
 	if (!file_exists($cache_file)) die("Cache file is missing: $cache_file");
 
@@ -121,7 +149,7 @@ function weather_shortcode_func($atts)
 	$output = "<div class='peter-weather-widget'>";
 	$output .= "<h3 class='weather-title'>Current weather at " . $a['locationname'] . "</h3>";
 	$output .= "<img src='" . plugin_dir_url(__FILE__) . "icons/" .
-		$weatherJson->current->weather[0]->icon . "@2x.png' class='weather-icon current' />";
+		find_icon($weatherJson->current->weather[0]->id) . ".png' class='weather-icon current' />";
 	$output .= "<div>";
 	$output .= "<div class='flex-table'><span class='flex-row header'>TEMP</span><span class='flex-row day'>" .
 		round($weatherJson->current->temp) . "&deg;F</span></div>";
@@ -138,7 +166,7 @@ function weather_shortcode_func($atts)
 	foreach ($weatherJson->daily as $day) {
 		$output .= "<div class='day'>";
 		$output .= "<img src='" . plugin_dir_url(__FILE__) . "icons/" .
-			$day->weather[0]->icon . "@2x.png' class='weather-icon' />";
+			find_icon($day->weather[0]->id) . ".png' class='weather-icon' />";
 		$output .= "<h5 class='day-heading'>" . date('l', $day->dt) . " forecast</h5>";
 		$output .= "<div class='flex-table'><span class='flex-row header'>TEMP</span><span class='flex-row day'>" .
 			round($day->temp->day) . "&deg;F</span></div>";
@@ -156,7 +184,6 @@ function weather_shortcode_func($atts)
 
 function curl_weather_json($a)
 {
-	// This is where you run the code and display the output
 	$curl = curl_init();
 	$url = "https://api.openweathermap.org/data/3.0/onecall?units=imperial&lat=" .
 		$a['lat'] . "&lon=" . $a['lon'] . "&appid=" . $a['appid'] .

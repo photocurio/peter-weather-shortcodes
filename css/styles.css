@@ -8,7 +8,6 @@
 }
 
 .weather-icon {
-	filter: hue-rotate(54deg) saturate(10);
 	float: right;
 	margin-top: -15px;
 }
