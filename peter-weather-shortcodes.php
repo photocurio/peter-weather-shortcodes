@@ -68,7 +68,7 @@ function json_cached_api_results($cache_file = NULL, $expires = NULL, $a)
 	global $request_type, $purge_cache, $limit_reached, $request_limit;
 
 	if (!$cache_file) $cache_file = dirname(__FILE__) . '/api-cache.json';
-	if (!$expires) $expires = time() - 180 * 60; // 3 hours
+	if (!$expires) $expires = time() - 180; // 3 minutes
 
 	if (!file_exists($cache_file)) die("Cache file is missing: $cache_file");
 
