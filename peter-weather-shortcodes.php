@@ -1,12 +1,13 @@
 <?php
 /*
-Plugin Name: Weather Shortcode Plugin
+Plugin Name: Peter's Weather Shortcodes
 Description: Show weather details in a widget
 Version: 0.17
 */
 
 add_action('wp_enqueue_scripts', 'peter_add_stylesheet');
 add_shortcode('weather-shortcode', 'weather_shortcode_func');
+add_shortcode('small-craft-advisory', 'small_craft_advisory_shortcode_func');
 
 /** * Add stylesheet to the page*/
 function peter_add_stylesheet()
@@ -93,15 +94,13 @@ function find_icon($code)
  */
 function json_cached_api_results($cache_file = NULL, $expires = NULL, $a)
 {
-	global $request_type, $purge_cache, $limit_reached, $request_limit;
-
 	if (!$cache_file) $cache_file = dirname(__FILE__) . '/api-cache.json';
-	if (!$expires) $expires = time() - 180 * 60; // 3 minutes
+	if (!$expires) $expires = time() - 180; // 3 minutes
 
 	if (!file_exists($cache_file)) die("Cache file is missing: $cache_file");
 
 	// Check that the file is older than the expire time and that it's not empty
-	if (filectime($cache_file) < $expires || file_get_contents($cache_file)  == '' || $purge_cache && intval($_SESSION['views']) <= $request_limit) {
+	if (filectime($cache_file) < $expires || file_get_contents($cache_file)  == '') {
 
 		// File is too old, refresh cache
 		$api_results = curl_weather_json($a);
@@ -113,12 +112,8 @@ function json_cached_api_results($cache_file = NULL, $expires = NULL, $a)
 		else
 			unlink($cache_file);
 	} else {
-		// Check for the number of purge cache requests to avoid abuse
-		if (intval($_SESSION['views']) >= $request_limit)
-			$limit_reached = " <span class='error'>Request limit reached ($request_limit). Please try purging the cache later.</span>";
 		// Fetch cache
 		$json_results = file_get_contents($cache_file);
-		$request_type = 'JSON';
 	}
 
 	return json_decode($json_results);
@@ -149,15 +144,15 @@ function weather_shortcode_func($atts)
 	$output = "<div class='peter-weather-widget'>";
 	$output .= "<h3 class='weather-title'>Current weather at " . $a['locationname'] . "</h3>";
 	$output .= "<img src='" . plugin_dir_url(__FILE__) . "icons/" .
-		find_icon($weatherJson->current->weather[0]->id) . ".png' class='weather-icon current' />";
+		esc_attr(find_icon($weatherJson->current->weather[0]->id)) . ".png' class='weather-icon current' />";
 	$output .= "<div>";
 	$output .= "<div class='flex-table'><span class='flex-row header'>TEMP</span><span class='flex-row day'>" .
-		round($weatherJson->current->temp) . "&deg;F</span></div>";
+		esc_html(round($weatherJson->current->temp)) . "&deg;F</span></div>";
 	$output .= "<div class='flex-table'><span class='flex-row header'>WEATHER</span><span class='flex-row day'>" .
-		$weatherJson->current->weather[0]->description . "</span></div>";
+		esc_html($weatherJson->current->weather[0]->description) . "</span></div>";
 	$output .= "<div class='flex-table'><span class='flex-row header'>WIND</span><span class='flex-row day'>" .
-		round($weatherJson->current->wind_speed) .
-		" MPH, " . degrees_to_directional($weatherJson->current->wind_deg) . "</span></div>";
+		esc_html(round($weatherJson->current->wind_speed)) .
+		" MPH, " . esc_html(degrees_to_directional($weatherJson->current->wind_deg)) . "</span></div>";
 	$output .= "</div>";
 
 
@@ -166,7 +161,7 @@ function weather_shortcode_func($atts)
 	foreach ($weatherJson->daily as $day) {
 		$output .= "<div class='day'>";
 		$output .= "<img src='" . plugin_dir_url(__FILE__) . "icons/" .
-			find_icon($day->weather[0]->id) . ".png' class='weather-icon' />";
+			esc_attr(find_icon($day->weather[0]->id)) . ".png' class='weather-icon' />";
 		$output .= "<h5 class='day-heading'>" . date('l', $day->dt) . " forecast</h5>";
 		$output .= "<div class='flex-table'><span class='flex-row header'>TEMP</span><span class='flex-row day'>" .
 			round($day->temp->day) . "&deg;F</span></div>";
@@ -174,7 +169,7 @@ function weather_shortcode_func($atts)
 			$day->weather[0]->description . "</span></div>";
 		$output .= "<div class='flex-table'><span class='flex-row header'>WIND</span><span class='flex-row day'>" .
 			round($day->wind_speed) .
-			" MPH, " . degrees_to_directional($day->wind_deg) . "</span></div>";
+			" MPH, " . esc_html(degrees_to_directional($day->wind_deg)) . "</span></div>";
 		$output .= "<hr></div>";
 	}
 	$output .= "</div>";
@@ -208,4 +203,36 @@ function curl_weather_json($a)
 		// The API returns data in JSON format, so convert that to a data object.
 		return json_decode($response);
 	}
+}
+
+
+function small_craft_advisory_shortcode_func()
+{
+	$cache_file = dirname(__FILE__) . '/api-cache.json';
+	$output = '';
+	if (!file_exists($cache_file)) {
+		return $output;
+	}
+
+	$results = file_get_contents($cache_file);
+	$json_results = json_decode($results);
+
+	if (!isset($json_results->alerts)) {
+		return $output;
+	}
+
+	foreach ($json_results->alerts as $alert) {
+		if ($alert->event !== 'Small Craft Advisory') {
+			continue;
+		}
+		$description = preg_replace('/\n/', ' ', $alert->description);
+		$description = preg_replace('/\*/', '</p><p>* ', $description);
+
+		$output = "<article class='post-entry warning'>";
+		$output .= "<h2 class='post-title warning'>" . esc_html($alert->event) . "</h2>";
+		$output .= "<p>" . wp_kses($description, array('p' => array())) . "</p>";
+		$output .= "</article>";
+	}
+
+	return $output;
 }
