@@ -7,9 +7,19 @@
 	margin-bottom: 5px;
 }
 
+.weather-title {
+	margin-bottom: 5px;
+}
+
+.weather-period {
+	margin: 0 0 3px;
+}
+
 .weather-icon {
 	float: right;
-	margin-top: -15px;
+	margin-top: -5px;
+	width: 80px;
+	height: 80px;
 }
 
 .weather-icon.current {
@@ -41,10 +51,13 @@
 	width: 65%;
 }
 
+/**
+ * Styles for Small Craft Advisories
+ */
 article.post-entry.warning {
 	background-color: white;
 	color: black;
-	padding: 20px 40px 20px 20px;
+	padding: 20px 40px 10px 20px;
 	margin-bottom: 40px;
 }
 
