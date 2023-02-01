@@ -43,36 +43,6 @@ function find_icon(int $code)
 	else return '05';
 }
 
-/**
- * Get the weather data from the OpenWeather Onecall service.
- */
-function curl_weather_json(array $a)
-{
-	$curl = curl_init();
-	$url = "https://api.openweathermap.org/data/3.0/onecall?units=imperial&lat=" .
-		$a['lat'] . "&lon=" . $a['lon'] . "&appid=" . $a['appid'] .
-		"&exclude=minutely,hourly";
-	curl_setopt_array($curl, array(
-		CURLOPT_URL => $url,
-		CURLOPT_RETURNTRANSFER => true,
-		CURLOPT_FOLLOWLOCATION => true,
-		CURLOPT_ENCODING => "",
-		CURLOPT_MAXREDIRS => 10,
-		CURLOPT_TIMEOUT => 30,
-		CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-		CURLOPT_CUSTOMREQUEST => "GET"
-	));
-	$response = curl_exec($curl);
-	$err = curl_error($curl);
-	curl_close($curl);
-
-	if ($err) {
-		return "cURL Error #:" . $err;
-	} else {
-		// The API returns data in JSON format, so convert that to a data object.
-		return json_decode($response);
-	}
-}
 
 /**
  * API Request Caching
@@ -93,12 +63,17 @@ function json_cached_api_results(string $cache_file = NULL, int $expires = NULL,
 	if (filectime($cache_file) < $expires || file_get_contents($cache_file)  == '') {
 
 		// File is too old, refresh cache
-		$api_results = curl_weather_json($a);
-		$json_results = json_encode($api_results);
+		$url = "https://api.openweathermap.org/data/3.0/onecall?units=imperial&lat=" .
+			$a['lat'] . "&lon=" . $a['lon'] . "&appid=" . $a['appid'] .
+			"&exclude=minutely,hourly";
+
+		$api_results = wp_remote_get($url);
+		$json = json_decode($api_results['body']);
+		$json_data = json_encode($json);
 
 		// Remove cache file on error to avoid writing wrong xml
-		if ($api_results && $json_results)
-			file_put_contents($cache_file, $json_results);
+		if ($api_results && $json_data)
+			file_put_contents($cache_file, $json_data);
 		else
 			unlink($cache_file);
 	} else {
