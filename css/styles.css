@@ -3,6 +3,10 @@
 	margin: 10px 0;
 }
 
+.post-entry.warning ul {
+	margin-bottom: 10px;
+}
+
 .day-heading {
 	margin-bottom: 5px;
 }

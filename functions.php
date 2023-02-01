@@ -43,7 +43,6 @@ function find_icon(int $code)
 	else return '05';
 }
 
-
 /**
  * API Request Caching
  *
@@ -63,17 +62,14 @@ function json_cached_api_results(string $cache_file = NULL, int $expires = NULL,
 	if (filectime($cache_file) < $expires || file_get_contents($cache_file)  == '') {
 
 		// File is too old, refresh cache
-		$url = "https://api.openweathermap.org/data/3.0/onecall?units=imperial&lat=" .
-			$a['lat'] . "&lon=" . $a['lon'] . "&appid=" . $a['appid'] .
-			"&exclude=minutely,hourly";
-
+		$url  = 'https://api.openweathermap.org/data/3.0/onecall?units=imperial&lat=';
+		$url .= $a['lat'] . '&lon=' . $a['lon'] . '&appid=' . $a['appid'] . '&exclude=minutely,hourly';
 		$api_results = wp_remote_get($url);
-		$json = json_decode($api_results['body']);
-		$json_data = json_encode($json);
+		$json_results = $api_results['body'];
 
 		// Remove cache file on error to avoid writing wrong xml
-		if ($api_results && $json_data)
-			file_put_contents($cache_file, $json_data);
+		if ($api_results && isset($api_results['body']))
+			file_put_contents($cache_file, $json_results);
 		else
 			unlink($cache_file);
 	} else {
