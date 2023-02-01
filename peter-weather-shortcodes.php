@@ -47,7 +47,6 @@ class PeterWeatherShortcodes
 			}
 		}
 		if ($nullValue) return 'Add lat, lon, OpenWeather API key, and location name to weather shortcode';
-
 		$weatherJson = json_cached_api_results(NULL, 300, $a);
 
 		$output  = '<div class="peter-weather-widget">';
@@ -83,7 +82,7 @@ class PeterWeatherShortcodes
 		return $output;
 	}
 
-	public function weather_sca_func()
+	public function weather_sca_func(): string
 	{
 		$cache_file = dirname(__FILE__) . '/api-cache.json';
 		if (!file_exists($cache_file)) {
