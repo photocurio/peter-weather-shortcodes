@@ -3,32 +3,32 @@
 /**
  * Map degrees to cardinal direction
  */
-function degrees_to_directional($deg)
+function degrees_to_directional(int $deg)
 {
 	if (!is_numeric($deg)) return;
-	else if ($deg < 11.25) return 'N';
-	else if ($deg < 33.75) return 'NNE';
-	else if ($deg < 56.25) return 'NE';
-	else if ($deg < 78.75) return 'ENE';
-	else if ($deg < 101.25) return 'E';
-	else if ($deg < 123.75) return 'ESE';
-	else if ($deg < 146.25) return 'SE';
-	else if ($deg < 168.75) return 'SSE';
-	else if ($deg < 191.25) return 'S';
-	else if ($deg < 213.75) return 'SSW';
-	else if ($deg < 236.25) return 'SW';
-	else if ($deg < 258.75) return 'WSW';
-	else if ($deg < 281.25) return 'W';
-	else if ($deg < 303.75) return 'WNW';
-	else if ($deg < 326.25) return 'NW';
-	else if ($deg < 348.75) return 'NNW';
+	else if ($deg < 11) return 'N';
+	else if ($deg < 34) return 'NNE';
+	else if ($deg < 56) return 'NE';
+	else if ($deg < 79) return 'ENE';
+	else if ($deg < 101) return 'E';
+	else if ($deg < 124) return 'ESE';
+	else if ($deg < 146) return 'SE';
+	else if ($deg < 169) return 'SSE';
+	else if ($deg < 191) return 'S';
+	else if ($deg < 214) return 'SSW';
+	else if ($deg < 236) return 'SW';
+	else if ($deg < 259) return 'WSW';
+	else if ($deg < 281) return 'W';
+	else if ($deg < 304) return 'WNW';
+	else if ($deg < 326) return 'NW';
+	else if ($deg < 349) return 'NNW';
 	else return 'N';
 }
 
 /**
  * Map weather condition codes to 2 digit weaather icon code
  */
-function find_icon($code)
+function find_icon(int $code)
 {
 	$code = intval($code);
 	if (!is_numeric($code)) return '01';
@@ -46,7 +46,7 @@ function find_icon($code)
 /**
  * Get the weather data from the OpenWeather Onecall service.
  */
-function curl_weather_json($a)
+function curl_weather_json(array $a)
 {
 	$curl = curl_init();
 	$url = "https://api.openweathermap.org/data/3.0/onecall?units=imperial&lat=" .
@@ -82,7 +82,7 @@ function curl_weather_json($a)
  * 
  * @arg Argument description and usage info
  */
-function json_cached_api_results($cache_file = NULL, $expires = NULL, $a)
+function json_cached_api_results(string $cache_file = NULL, int $expires = NULL, array $a)
 {
 	if (!$cache_file) $cache_file = dirname(__FILE__) . '/api-cache.json';
 	if (!$expires) $expires = time() - 180; // 3 minutes
