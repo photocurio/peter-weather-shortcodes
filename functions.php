@@ -51,7 +51,7 @@ function find_icon(int $code): string
  * 
  * @arg Argument description and usage info
  */
-function json_cached_api_results(string $cache_file = NULL, int $expires = NULL, array $a): object
+function json_cached_api_results(string $cache_file = NULL, int $expires = NULL, array $params): object
 {
 	if (!$cache_file) $cache_file = dirname(__FILE__) . '/api-cache.json';
 	if (!$expires) $expires = time() - 180; // 3 minutes
@@ -63,15 +63,17 @@ function json_cached_api_results(string $cache_file = NULL, int $expires = NULL,
 
 		// File is too old, refresh cache
 		$url  = 'https://api.openweathermap.org/data/3.0/onecall?units=imperial&lat=';
-		$url .= $a['lat'] . '&lon=' . $a['lon'] . '&appid=' . $a['appid'] . '&exclude=minutely,hourly';
+		$url .= $params['lat'] . '&lon=' . $params['lon'] . '&appid=' . $params['appid'] . '&exclude=minutely,hourly';
 		$api_results = wp_remote_get($url);
-		$json_results = $api_results['body'];
+		$json_data = $api_results['body'];
 
 		// Remove cache file on error to avoid writing bad data
-		if ($api_results && isset($api_results['body']))
-			file_put_contents($cache_file, $json_results);
-		else
+		if ($api_results && isset($api_results['body'])) {
+			file_put_contents($cache_file, $json_data);
+			return json_decode($json_data);
+		} else {
 			unlink($cache_file);
+		}
 		return 'There was an error getting the weather data';
 	} else {
 		// Fetch cache

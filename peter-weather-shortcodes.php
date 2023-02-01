@@ -27,7 +27,7 @@ class PeterWeatherShortcodes
 	/**
 	 * The output for the weather shortcode.
 	 */
-	public function weather_shortcode_func($atts): string
+	public function weather_shortcode_func(array $atts): string
 	{
 		$a = shortcode_atts(array(
 			'lon' => '',
