@@ -91,7 +91,8 @@ function find_icon( int $weather_code ): string {
  * @param array  $params array of params to pass to the data endpoint. These params come from the shortcode args.
  */
 function json_cached_api_results( string $cache_file = null, int $expires = null, array $params ): object {
-	$filesystem = new WP_Filesystem_Base();
+	WP_Filesystem();
+	global $wp_filesystem;
 
 	if ( ! $cache_file ) {
 		$cache_file = dirname( __FILE__ ) . '/api-cache.json';
@@ -105,7 +106,7 @@ function json_cached_api_results( string $cache_file = null, int $expires = null
 	}
 
 	// Check that the file is older than the expire time and that it's not empty.
-	if ( filectime( $cache_file ) < $expires || $filesystem->get_contents( $cache_file ) === '' ) {
+	if ( filectime( $cache_file ) < $expires || $wp_filesystem->get_contents( $cache_file ) === '' ) {
 		// File is too old, refresh cache.
 		$url         = 'https://api.openweathermap.org/data/3.0/onecall?units=imperial&lat=';
 		$url        .= $params['lat'] . '&lon=' . $params['lon'] . '&appid=' . $params['appid'] . '&exclude=minutely,hourly';
@@ -114,7 +115,7 @@ function json_cached_api_results( string $cache_file = null, int $expires = null
 
 		// Remove cache file on error to avoid writing bad data.
 		if ( $api_results && isset( $api_results['body'] ) ) {
-			$filesystem->put_contents( $cache_file, $json_data );
+			$wp_filesystem->put_contents( $cache_file, $json_data );
 			return json_decode( $json_data );
 		} else {
 			unlink( $cache_file );
@@ -122,7 +123,7 @@ function json_cached_api_results( string $cache_file = null, int $expires = null
 		return 'There was an error getting the weather data';
 	} else {
 		// Fetch cache.
-		$json_results = $filesystem->get_contents( $cache_file );
+		$json_results = $wp_filesystem->get_contents( $cache_file );
 	}
 
 	return json_decode( $json_results );

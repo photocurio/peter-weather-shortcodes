@@ -110,12 +110,15 @@ class PeterWeatherShortcodes {
 	 * A sortcode that echos Weather Warnings and Small Craft Advisories.
 	 */
 	public function weather_sca_func(): string {
+		WP_Filesystem();
+		global $wp_filesystem;
+
 		$cache_file = dirname( __FILE__ ) . '/api-cache.json';
 		if ( ! file_exists( $cache_file ) ) {
 			return '';
 		}
 
-		$results      = file_get_contents( $cache_file );
+		$results      = $wp_filesystem->get_contents( $cache_file );
 		$json_results = json_decode( $results );
 
 		if ( ! isset( $json_results->alerts ) ) {
