@@ -66,7 +66,7 @@ function find_icon( int $weather_code ): string {
 		return '01';
 	} elseif ( $weather_code < 299 ) {
 		return '11';
-	} elseif ( $weather_code < 522 ) {
+	} elseif ( $weather_code < 502 ) {
 		return '09';
 	} elseif ( $weather_code < 599 ) {
 		return '10';
@@ -86,41 +86,36 @@ function find_icon( int $weather_code ): string {
  *
  * Use server-side caching to store API requests rather than request for each page view.
  *
- * @param string $cache_file the files that holds the cached data.
- * @param int    $expires number of seconds that the cache is valid.
- * @param array  $params array of params to pass to the data endpoint. These params come from the shortcode args.
+ * @param array $params array of params to pass to the data endpoint. These params come from the shortcode args.
  */
-function json_cached_api_results( string $cache_file = null, int $expires = null, array $params ): object {
+function json_cached_api_results( array $params ): object {
 	WP_Filesystem();
 	global $wp_filesystem;
 
-	if ( ! $cache_file ) {
-		$cache_file = dirname( __FILE__ ) . '/api-cache.json';
-	}
-	if ( ! $expires ) {
-		$expires = time() - 180; // 3 minutes.
-	}
+	$cache_file  = dirname( __FILE__ ) . '/api-cache.json';
+	$mtime       = $wp_filesystem->mtime( $cache_file );
+	$expire_time = time() - 300; // 5 minutes.
 
-	if ( ! file_exists( $cache_file ) ) {
+	if ( ! $wp_filesystem->exists( $cache_file ) ) {
 		die( esc_html( "Cache file is missing: $cache_file" ) );
 	}
 
 	// Check that the file is older than the expire time and that it's not empty.
-	if ( filectime( $cache_file ) < $expires || $wp_filesystem->get_contents( $cache_file ) === '' ) {
-		// File is too old, refresh cache.
+	if ( $mtime < $expire_time || $wp_filesystem->get_contents( $cache_file ) === '' ) {
+		// File is too old, or empty. Refresh cache.
 		$url         = 'https://api.openweathermap.org/data/3.0/onecall?units=imperial&lat=';
 		$url        .= $params['lat'] . '&lon=' . $params['lon'] . '&appid=' . $params['appid'] . '&exclude=minutely,hourly';
 		$api_results = wp_remote_get( $url );
-		$json_data   = $api_results['body'];
 
-		// Remove cache file on error to avoid writing bad data.
+		// Wipe cache file on error to avoid writing bad data.
 		if ( $api_results && isset( $api_results['body'] ) ) {
+			$json_data = $api_results['body'];
 			$wp_filesystem->put_contents( $cache_file, $json_data );
 			return json_decode( $json_data );
 		} else {
-			unlink( $cache_file );
+			$wp_filesystem->put_contents( $cache_file, '' );
+			return 'There was an error getting the weather data';
 		}
-		return 'There was an error getting the weather data';
 	} else {
 		// Fetch cache.
 		$json_results = $wp_filesystem->get_contents( $cache_file );

@@ -63,7 +63,8 @@ class PeterWeatherShortcodes {
 		if ( $null_value ) {
 			return 'Add lat, lon, OpenWeather API key, and location name to weather shortcode';
 		}
-		$weather_json = json_cached_api_results( null, 300, $a );
+		$weather_json = json_cached_api_results( $a );
+		$current      = $weather_json->current;
 		/**
 		 * Using an output buffer to assemble the markup doesn't work in a class.
 		 * We have to concatenate a string.
@@ -72,22 +73,22 @@ class PeterWeatherShortcodes {
 		$output .= '<h3 class="weather-title">Current weather at ' . $a['locationname'] . '</h3>';
 		$output .= '<p class="weather-period">updated every 5 minutes</p>';
 		$output .= '<img src="' . plugin_dir_url( __FILE__ ) . 'icons/';
-		$output .= esc_attr( find_icon( $weather_json->current->weather[0]->id ) );
+		$output .= esc_attr( find_icon( $current->weather[0]->id ) );
 		$output .= '.png" class="weather-icon current" />';
 		$output .= '<div>';
 		$output .= '<div class="flex-table"><span class="flex-row header">TEMP</span><span class="flex-row day">';
-		$output .= esc_html( round( $weather_json->current->temp ) ) . '&deg;F</span></div>';
+		$output .= esc_html( round( $current->temp ) ) . '&deg;F</span></div>';
 		$output .= '<div class="flex-table"><span class="flex-row header">WEATHER</span><span class="flex-row day">';
-		$output .= esc_html( $weather_json->current->weather[0]->description ) . '</span></div>';
+		$output .= esc_html( $current->weather[0]->description ) . '</span></div>';
 		$output .= '<div class="flex-table"><span class="flex-row header">WIND</span>';
-		$output .= '<span class="flex-row day">' . esc_html( round( $weather_json->current->wind_speed ) ) . ' MPH, ';
-		$output .= esc_html( degrees_to_directional( $weather_json->current->wind_deg ) ) . '</span></div></div><hr>';
+		$output .= '<span class="flex-row day">' . esc_html( round( $current->wind_speed ) ) . ' MPH, ';
+		$output .= esc_html( degrees_to_directional( $current->wind_deg ) ) . '</span></div></div><hr>';
 
 		foreach ( $weather_json->daily as $day ) {
 			$output .= '<div class="day">';
 			$output .= '<img src="' . plugin_dir_url( __FILE__ ) . 'icons/' . esc_attr( find_icon( $day->weather[0]->id ) );
 			$output .= '.png" class="weather-icon" />';
-			$output .= '<h5 class="day-heading">' . date( 'l', $day->dt ) . ' forecast</h5>';
+			$output .= '<h5 class="day-heading">' . wp_date( 'l', $day->dt ) . ' forecast</h5>';
 			$output .= '<div class="flex-table"><span class="flex-row header">TEMP</span>';
 			$output .= '<span class="flex-row day">';
 			$output .= esc_html( round( $day->temp->day ) ) . '&deg;F';
@@ -99,8 +100,8 @@ class PeterWeatherShortcodes {
 			$output .= esc_html( degrees_to_directional( $day->wind_deg ) );
 			$output .= '</span></div><hr></div>';
 		} // end foreach loop
-		$output .= '<p class="weather-update">last updated ';
-		$output .= wp_date( 'j F Y g:i A', $weather_json->current->dt ) . '</p>';
+		$output .= '<p class="weather-update">updated ';
+		$output .= wp_date( 'j F Y g:i A', $current->dt ) . '</p>';
 		$output .= '</div>';
 
 		return $output;
