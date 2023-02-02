@@ -1,9 +1,12 @@
 <?php
 /*
 Plugin Name: Peter's Weather Shortcodes
-Description: Show weather details in a widget
-Version: 0.21
+Description: Show weather forcast in a sidebar widget. Also displays warning on top of the Posts feed.
+Version: 0.30
+Author: Peter Mumford
 */
+
+declare(strict_types=1);
 
 require 'functions.php';
 
@@ -21,7 +24,7 @@ class PeterWeatherShortcodes
 	 */
 	public function weather_add_stylesheet(): void
 	{
-		wp_enqueue_style('prefix-style', plugins_url('css/styles.css', __FILE__), false, '0.21');
+		wp_enqueue_style('prefix-style', plugins_url('css/styles.css', __FILE__), false, '0.30');
 	}
 
 	/**
@@ -48,7 +51,10 @@ class PeterWeatherShortcodes
 		}
 		if ($nullValue) return 'Add lat, lon, OpenWeather API key, and location name to weather shortcode';
 		$weatherJson = json_cached_api_results(NULL, 300, $a);
-
+		/**
+		 * Using an output buffer to assemble the markup doesn't work in a class.
+		 * We have to concatenate a string.
+		 */
 		$output  = '<div class="peter-weather-widget">';
 		$output .= '<h3 class="weather-title">Current weather at ' . $a['locationname'] . '</h3>';
 		$output .= '<p class="weather-period">updated every 5 minutes</p>';
@@ -59,13 +65,13 @@ class PeterWeatherShortcodes
 		$output .= '<div class="flex-table"><span class="flex-row header">WEATHER</span><span class="flex-row day">';
 		$output .= esc_html($weatherJson->current->weather[0]->description) . '</span></div>';
 		$output .= '<div class="flex-table"><span class="flex-row header">WIND</span>';
-		$output .= '<span class="flex-row day">' . esc_html(round($weatherJson->current->wind_speed)) . ' MPH,';
+		$output .= '<span class="flex-row day">' . esc_html(round($weatherJson->current->wind_speed)) . ' MPH, ';
 		$output .= esc_html(degrees_to_directional($weatherJson->current->wind_deg)) . '</span></div></div><hr>';
 
 		foreach ($weatherJson->daily as $day) {
 			$output .= '<div class="day">';
 			$output .= '<img src="' . plugin_dir_url(__FILE__) . 'icons/' . esc_attr(find_icon($day->weather[0]->id)) . '.png" class="weather-icon" />';
-			$output .= '<h5 class="day-heading">' . date("l", $day->dt) . ' forecast</h5>';
+			$output .= '<h5 class="day-heading">' . date('l', $day->dt) . ' forecast</h5>';
 			$output .= '<div class="flex-table"><span class="flex-row header">TEMP</span>';
 			$output .= '<span class="flex-row day">';
 			$output .= esc_html(round($day->temp->day)) . '&deg;F';
@@ -73,10 +79,11 @@ class PeterWeatherShortcodes
 			$output .= '<div class="flex-table"><span class="flex-row header">WEATHER</span>';
 			$output .= '<span class="flex-row day">' . esc_html($day->weather[0]->description) . '</span>';
 			$output .= '</div><div class="flex-table"><span class="flex-row header">WIND</span>';
-			$output .= '<span class="flex-row day">' . esc_html(round($day->wind_speed)) . 'MPH,';
+			$output .= '<span class="flex-row day">' . esc_html(round($day->wind_speed)) . 'MPH, ';
 			$output .= esc_html(degrees_to_directional($day->wind_deg));
 			$output .= '</span></div><hr></div>';
 		} // end foreach loop 
+		$output .= '<p class="weather-update">last updated ' . wp_date('j F Y g:i A', $weatherJson->current->dt) . '</p>';
 		$output .= '</div>';
 
 		return $output;
@@ -97,16 +104,23 @@ class PeterWeatherShortcodes
 		}
 
 		foreach ($json_results->alerts as $alert) {
-			if ($alert->event === 'Small Craft Advisory' || $alert->event === 'Gale Watch') {
+			if (
+				str_contains($alert->event, 'Small Craft') ||
+				str_contains($alert->event, 'Gale') ||
+				str_contains($alert->event, 'Storm') ||
+				str_contains($alert->event, 'Hurricane') ||
+				str_contains($alert->event, 'Dense Fog') ||
+				str_contains($alert->event, 'Thunderstorm')
+			) {
 				/**
-				 * Use regex to format the Advisory with paragraphs and bullet points.
+				 * Use regex to format the Advisory with paragraphs and list items.
 				 */
 				$description = preg_replace('/\n/', ' ', $alert->description);
 				$description = preg_replace('/\*/', '</li><li>', $description);
 
 				$output  = '<article class="post-entry warning">';
 				$output .= '<h2 class="post-title warning">' . esc_html($alert->event) . '</h2>';
-				$output .= '<ul><li>' . wp_kses($description, array('li' => array())) . '</li></ul>';
+				$output .= '<ul><li>' . wp_kses_post($description) . '</li></ul>';
 				$output .= '</article>';
 			} else {
 				$output = '';

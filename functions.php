@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Map degrees to cardinal direction
  */
@@ -28,26 +30,25 @@ function degrees_to_directional(int $deg): string
 /**
  * Map weather condition codes to 2 digit weaather icon code
  */
-function find_icon(int $code): string
+function find_icon(int $weatherCode): string
 {
-	$code = intval($code);
-	if (!is_numeric($code)) return '01';
-	else if ($code === 511) return '13';
-	else if ($code === 800) return '01';
-	else if ($code < 299) 	return '11';
-	else if ($code < 522)	return '09';
-	else if ($code < 599) 	return '10';
-	else if ($code < 699) 	return '13';
-	else if ($code < 799) 	return '50';
-	else if ($code < 803) 	return '02';
+	if (!is_numeric($weatherCode)) return '01';
+	else if ($weatherCode === 511) return '13';
+	else if ($weatherCode === 800) return '01';
+	else if ($weatherCode < 299) 	return '11';
+	else if ($weatherCode < 522)	return '09';
+	else if ($weatherCode < 599) 	return '10';
+	else if ($weatherCode < 699) 	return '13';
+	else if ($weatherCode < 799) 	return '50';
+	else if ($weatherCode < 803) 	return '02';
 	else return '05';
 }
 
 /**
  * API Request Caching
  *
- * Use server-side caching to store API request's as JSON at a set 
- * interval, rather than each pageload.
+ * Use server-side caching to store API requests 
+ * rather than request for each page view.
  * 
  * @arg Argument description and usage info
  */
