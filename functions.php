@@ -1,11 +1,16 @@
 <?php
+/**
+ * Helper functions for the weather shortcodes.
+ *
+ * @package peter-weather-shortcodes
+ */
 
 declare(strict_types=1);
 
 /**
  * Map degrees to cardinal direction
  *
- * @param int $deg A compass bearing 0-365.
+ * @param int $deg A compass bearing. Value range is 0-365.
  */
 function degrees_to_directional( int $deg ): string {
 	if ( ! is_numeric( $deg ) ) {
@@ -79,14 +84,15 @@ function find_icon( int $weather_code ): string {
 /**
  * API Request Caching
  *
- * Use server-side caching to store API requests
- * rather than request for each page view.
+ * Use server-side caching to store API requests rather than request for each page view.
  *
  * @param string $cache_file the files that holds the cached data.
  * @param int    $expires number of seconds that the cache is valid.
  * @param array  $params array of params to pass to the data endpoint. These params come from the shortcode args.
  */
 function json_cached_api_results( string $cache_file = null, int $expires = null, array $params ): object {
+	$filesystem = new WP_Filesystem_Base();
+
 	if ( ! $cache_file ) {
 		$cache_file = dirname( __FILE__ ) . '/api-cache.json';
 	}
@@ -99,7 +105,7 @@ function json_cached_api_results( string $cache_file = null, int $expires = null
 	}
 
 	// Check that the file is older than the expire time and that it's not empty.
-	if ( filectime( $cache_file ) < $expires || file_get_contents( $cache_file ) === '' ) {
+	if ( filectime( $cache_file ) < $expires || $filesystem->get_contents( $cache_file ) === '' ) {
 		// File is too old, refresh cache.
 		$url         = 'https://api.openweathermap.org/data/3.0/onecall?units=imperial&lat=';
 		$url        .= $params['lat'] . '&lon=' . $params['lon'] . '&appid=' . $params['appid'] . '&exclude=minutely,hourly';
@@ -108,7 +114,7 @@ function json_cached_api_results( string $cache_file = null, int $expires = null
 
 		// Remove cache file on error to avoid writing bad data.
 		if ( $api_results && isset( $api_results['body'] ) ) {
-			file_put_contents( $cache_file, $json_data );
+			$filesystem->put_contents( $cache_file, $json_data );
 			return json_decode( $json_data );
 		} else {
 			unlink( $cache_file );
@@ -116,7 +122,7 @@ function json_cached_api_results( string $cache_file = null, int $expires = null
 		return 'There was an error getting the weather data';
 	} else {
 		// Fetch cache.
-		$json_results = file_get_contents( $cache_file );
+		$json_results = $filesystem->get_contents( $cache_file );
 	}
 
 	return json_decode( $json_results );

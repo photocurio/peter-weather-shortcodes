@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Plugin Name: Peter's Weather Shortcodes
  * Description: Show weather forcast in a sidebar widget. Also displays warning on top of the Posts feed.
@@ -13,8 +12,14 @@ declare(strict_types=1);
 
 require 'functions.php';
 
-class PeterWeatherShortcodes
-{
+/**
+ * The class that instantiates the plugin
+ */
+class PeterWeatherShortcodes {
+
+	/**
+	 * Construct the plugin: enqueue stylesheet and register two shortcodes.
+	 */
 	public function __construct() {
 		add_action( 'wp_enqueue_scripts', array( $this, 'weather_add_stylesheet' ) );
 		add_shortcode( 'weather-shortcode', array( $this, 'weather_shortcode_func' ) );
@@ -30,6 +35,9 @@ class PeterWeatherShortcodes
 
 	/**
 	 * The output for the weather shortcode.
+	 *
+	 * @param array $atts Attributes passed to the weather shortcode as an array.
+	 * These are the query params for the AJAX request for weather data.
 	 */
 	public function weather_shortcode_func( array $atts ): string {
 		$a = shortcode_atts(
@@ -98,6 +106,9 @@ class PeterWeatherShortcodes
 		return $output;
 	}
 
+	/**
+	 * A sortcode that echos Weather Warnings and Small Craft Advisories.
+	 */
 	public function weather_sca_func(): string {
 		$cache_file = dirname( __FILE__ ) . '/api-cache.json';
 		if ( ! file_exists( $cache_file ) ) {
