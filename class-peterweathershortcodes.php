@@ -13,7 +13,7 @@ declare(strict_types=1);
 require 'functions.php';
 
 /**
- * The class that instantiates the plugin
+ * The class that instantiates the plugin.
  */
 class PeterWeatherShortcodes {
 
@@ -27,10 +27,10 @@ class PeterWeatherShortcodes {
 	}
 
 	/**
-	 * Add stylesheet to the page
+	 * Add stylesheet to the page.
 	 */
 	public function weather_add_stylesheet(): void {
-		wp_enqueue_style( 'prefix-style', plugins_url( 'css/styles.css', __FILE__ ), false, '0.30' );
+		wp_enqueue_style( 'peter-weather-style', plugins_url( 'css/styles.css', __FILE__ ), false, '0.4' );
 	}
 
 	/**
@@ -50,9 +50,7 @@ class PeterWeatherShortcodes {
 			$atts
 		);
 
-		/**
-		 * Check for empty attributes.
-		 */
+		// Check for empty attributes.
 		$null_value = false;
 		foreach ( $a as $key => $value ) {
 			if ( empty( $value ) ) {
@@ -65,10 +63,7 @@ class PeterWeatherShortcodes {
 		}
 		$weather_json = json_cached_api_results( $a );
 		$current      = $weather_json->current;
-		/**
-		 * Using an output buffer to assemble the markup doesn't work in a class.
-		 * We have to concatenate a string.
-		 */
+		// An output buffer doesn't work here. We have to concatenate a string.
 		$output  = '<div class="peter-weather-widget">';
 		$output .= '<h3 class="weather-title">Current weather at ' . $a['locationname'] . '</h3>';
 		$output .= '<p class="weather-period">updated every 5 minutes</p>';
@@ -99,7 +94,7 @@ class PeterWeatherShortcodes {
 			$output .= '<span class="flex-row day">' . esc_html( round( $day->wind_speed ) ) . 'MPH, ';
 			$output .= esc_html( degrees_to_directional( $day->wind_deg ) );
 			$output .= '</span></div><hr></div>';
-		} // end foreach loop
+		} // End the foreach loop.
 		$output .= '<p class="weather-update">updated ';
 		$output .= wp_date( 'j F Y g:i A', $current->dt ) . '</p>';
 		$output .= '</div>';
@@ -115,7 +110,8 @@ class PeterWeatherShortcodes {
 		global $wp_filesystem;
 
 		$cache_file = dirname( __FILE__ ) . '/api-cache.json';
-		if ( ! file_exists( $cache_file ) ) {
+
+		if ( ! $wp_filesystem->exists( $cache_file ) ) {
 			return '';
 		}
 
@@ -125,19 +121,16 @@ class PeterWeatherShortcodes {
 		if ( ! isset( $json_results->alerts ) ) {
 			return '';
 		}
-
 		foreach ( $json_results->alerts as $alert ) {
 			if (
-				str_contains( $alert->event, 'Small Craft' ) ||
-				str_contains( $alert->event, 'Gale' ) ||
-				str_contains( $alert->event, 'Storm' ) ||
-				str_contains( $alert->event, 'Hurricane' ) ||
-				str_contains( $alert->event, 'Dense Fog' ) ||
-				str_contains( $alert->event, 'Thunderstorm' )
+			str_contains( $alert->event, 'Small Craft' ) ||
+			str_contains( $alert->event, 'Gale' ) ||
+			str_contains( $alert->event, 'Storm' ) ||
+			str_contains( $alert->event, 'Hurricane' ) ||
+			str_contains( $alert->event, 'Dense Fog' ) ||
+			str_contains( $alert->event, 'Thunderstorm' )
 			) {
-				/**
-				 * Use regex to format the Advisory with paragraphs and list items.
-				 */
+				// Use regex to format the Advisory with list items.
 				$description = preg_replace( '/\n/', ' ', $alert->description );
 				$description = preg_replace( '/\*/', '</li><li>', $description );
 
@@ -145,11 +138,12 @@ class PeterWeatherShortcodes {
 				$output .= '<h2 class="post-title warning">' . esc_html( $alert->event ) . '</h2>';
 				$output .= '<ul><li>' . wp_kses_post( $description ) . '</li></ul>';
 				$output .= '</article>';
-			} else {
-				$output = '';
+				// The data sometimes includes duplicate or redundant alerts,
+				// so just output the first match.
+				return $output;
 			}
 		}
-		return $output;
+		return '';
 	}
 }
 
