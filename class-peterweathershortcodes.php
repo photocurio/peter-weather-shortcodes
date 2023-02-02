@@ -62,8 +62,14 @@ class PeterWeatherShortcodes {
 			return 'Add lat, lon, OpenWeather API key, and location name to weather shortcode';
 		}
 		$weather_json = json_cached_api_results( $a );
-		$current      = $weather_json->current;
+
+		if ( ! $weather_json ) {
+			return 'Something went wrong: we could not fetch the weather data.';
+		}
+
+		$current = $weather_json->current;
 		// An output buffer doesn't work here. We have to concatenate a string.
+		// First, setup the current weather state.
 		$output  = '<div class="peter-weather-widget">';
 		$output .= '<h3 class="weather-title">Current weather at ' . $a['locationname'] . '</h3>';
 		$output .= '<p class="weather-period">updated every 5 minutes</p>';
@@ -78,11 +84,11 @@ class PeterWeatherShortcodes {
 		$output .= '<div class="flex-table"><span class="flex-row header">WIND</span>';
 		$output .= '<span class="flex-row day">' . esc_html( round( $current->wind_speed ) ) . ' MPH, ';
 		$output .= esc_html( degrees_to_directional( $current->wind_deg ) ) . '</span></div></div><hr>';
-
+		// Second, loop through the forecasts and add them to the output.
 		foreach ( $weather_json->daily as $day ) {
 			$output .= '<div class="day">';
 			$output .= '<img src="' . plugin_dir_url( __FILE__ ) . 'icons/' . esc_attr( find_icon( $day->weather[0]->id ) );
-			$output .= '.png" class="weather-icon" />';
+			$output .= '.png" class="weather-icon" alt="' . $day->weather[0]->description . '" />';
 			$output .= '<h5 class="day-heading">' . wp_date( 'l', $day->dt ) . ' forecast</h5>';
 			$output .= '<div class="flex-table"><span class="flex-row header">TEMP</span>';
 			$output .= '<span class="flex-row day">';
@@ -95,6 +101,7 @@ class PeterWeatherShortcodes {
 			$output .= esc_html( degrees_to_directional( $day->wind_deg ) );
 			$output .= '</span></div><hr></div>';
 		} // End the foreach loop.
+		// Add the updated time.
 		$output .= '<p class="weather-update">updated ';
 		$output .= wp_date( 'j F Y g:i A', $current->dt ) . '</p>';
 		$output .= '</div>';
