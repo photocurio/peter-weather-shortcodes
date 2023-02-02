@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Peter's Weather Shortcodes
  * Description: Show weather forcast in a sidebar widget. Also displays warning on top of the Posts feed.
- * Version: 0.30
+ * Version: 0.4
  * Author: Peter Mumford
  *
  * @package peter-weather-shortcodes
