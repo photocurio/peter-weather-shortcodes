@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Map degrees to cardinal direction
  *
- * @param int $deg A compass bearing 0-365
+ * @param int $deg A compass bearing 0-365.
  */
 function degrees_to_directional( int $deg ): string {
 	if ( ! is_numeric( $deg ) ) {
@@ -49,6 +49,8 @@ function degrees_to_directional( int $deg ): string {
 
 /**
  * Map weather condition codes to 2 digit weaather icon code
+ *
+ * @param int $weather_code numerical code that refers to the generalized weather condition.
  */
 function find_icon( int $weather_code ): string {
 	if ( ! is_numeric( $weather_code ) ) {
@@ -80,7 +82,9 @@ function find_icon( int $weather_code ): string {
  * Use server-side caching to store API requests
  * rather than request for each page view.
  *
- * @arg Argument description and usage info
+ * @param string $cache_file the files that holds the cached data.
+ * @param int    $expires number of seconds that the cache is valid.
+ * @param array  $params array of params to pass to the data endpoint. These params come from the shortcode args.
  */
 function json_cached_api_results( string $cache_file = null, int $expires = null, array $params ): object {
 	if ( ! $cache_file ) {
