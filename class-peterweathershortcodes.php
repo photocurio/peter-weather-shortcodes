@@ -40,18 +40,12 @@ class PeterWeatherShortcodes
             ),
             $atts
         );
+
         // Check for empty attributes.
-        $null_value = false;
-        foreach ($a as $key => $value) {
-            if (empty($value)) {
-                $null_value = true;
-                break;
-            }
+        if (in_array('', $a, true)) {
+            return 'Add lat, lon, appid (OpenWeather API key), and locationname to weather shortcode';
         }
 
-        if ($null_value) {
-            return 'Add lat, lon, OpenWeather API key, and location name to weather shortcode';
-        }
         $weather_json = $this->jsonCachedApiResults($a);
 
         if (! $weather_json) {
@@ -152,8 +146,6 @@ class PeterWeatherShortcodes
      */
     private function degreesToDirectional(int $deg): string
     {
-        return 'getting direction';
-        exit;
         if (! is_numeric($deg)) {
             return '';
         } elseif ($deg < 11) {
