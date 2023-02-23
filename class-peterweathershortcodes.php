@@ -31,7 +31,7 @@ class PeterWeatherShortcodes
      */
     public function weatherShortcodeFunc(array $atts): string
     {
-        $a = shortcode_atts(
+        $params = shortcode_atts(
             array(
                 'lon'          => '',
                 'lat'          => '',
@@ -41,12 +41,12 @@ class PeterWeatherShortcodes
             $atts
         );
 
-        // Check for empty attributes.
-        if (in_array('', $a, true)) {
+        // Check for empty attributes in $params.
+        if (in_array('', $params, true)) {
             return 'Add lat, lon, appid (OpenWeather API key), and locationname to weather shortcode';
         }
 
-        $weather_json = $this->jsonCachedApiResults($a);
+        $weather_json = $this->jsonCachedApiResults($params);
 
         if (! $weather_json) {
             return 'Something went wrong: we could not fetch the weather data.';
@@ -56,7 +56,7 @@ class PeterWeatherShortcodes
         // An output buffer doesn't work here. We have to concatenate a string.
         // First, setup the current weather state.
         $output  = '<div class="peter-weather-widget">';
-        $output .= '<h3 class="weather-title">Current weather at ' . $a['locationname'] . '</h3>';
+        $output .= '<h3 class="weather-title">Current weather at ' . $params['locationname'] . '</h3>';
         $output .= '<p class="weather-period">updated every 5 minutes</p>';
         $output .= '<img src="' . plugin_dir_url(__FILE__) . 'icons/';
         $output .= esc_attr($this->findIcon($current->weather[0]->id));
