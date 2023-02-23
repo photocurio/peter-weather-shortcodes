@@ -216,7 +216,8 @@ class PeterWeatherShortcodes
     /**
      * API Request Caching
      *
-     * Use server-side caching to store API requests rather than request for each page view.
+     * Use server-side caching to store API results.
+     * This method writes a JSON file to disk.
      */
     private function jsonCachedApiResults(array $params): object
     {
@@ -232,10 +233,9 @@ class PeterWeatherShortcodes
 
         // Check that the file is older than the expire time and that it's not empty.
         if ($mtime < $expire_time || $wp_filesystem->get_contents($cache_file) === '') {
-            // File is too old, or empty. Refresh cache.
-            $url         = 'https://api.openweathermap.org/data/3.0/onecall';
-            $url        .= '?&exclude=minutely,hourly&units=imperial&lat=';
-            $url        .= $params['lat'] . '&lon=' . $params['lon'] . '&appid=' . $params['appid'];
+            // File is too old, or empty, so refresh data.
+            $url  = "https://api.openweathermap.org/data/3.0/onecall?&exclude=minutely,hourly&units=imperial";
+            $url .= "&lat={$params['lat']}&lon={$params['lon']}&appid={$params['appid']}";
             $api_results = wp_remote_get($url);
 
             // Wipe cache file on error to avoid writing bad data.
@@ -251,7 +251,6 @@ class PeterWeatherShortcodes
             // Fetch cache.
             $json_results = $wp_filesystem->get_contents($cache_file);
         }
-
         return json_decode($json_results);
     }
 }
